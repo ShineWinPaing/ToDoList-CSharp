@@ -1,0 +1,34 @@
+﻿@model IEnumerable<ToDoList.Models.ListItemModel>
+
+@{
+    ViewData["Title"] = "My Todo List";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>@item.Description</td>
+                <td>@(item.IsCompleted ? "Done" : "Not Yet")</td>
+                <td>
+                    <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure?')">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+    <a class="btn btn-primary" asp-asp-controller="Home" asp-action="Create">Add New Task</a>
+</table>
