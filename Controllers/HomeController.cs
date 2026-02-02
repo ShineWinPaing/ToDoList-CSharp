@@ -26,6 +26,19 @@ namespace ToDoList.Controllers
         {
             return View();
         }
+
+        public IActionResult Edit(int id)
+        {
+            var item = _db.TodoItems.Find(id);
+
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            return View(item);
+        }
+
         [HttpPost]
         public IActionResult Create(ListItemModel newItem)
         {
@@ -37,7 +50,19 @@ namespace ToDoList.Controllers
             }
             return View(newItem);
         }
-       
+
+        [HttpPost]
+        public IActionResult Edit(ListItemModel updateItem)
+        {
+            if (ModelState.IsValid)
+            {
+                _db.TodoItems.Update(updateItem);
+                _db.SaveChanges();
+
+                return RedirectToAction("Index");
+            }
+            return View(updateItem);
+        }
 
         [HttpPost]
         public IActionResult Delete(int id)
