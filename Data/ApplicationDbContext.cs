@@ -7,5 +7,6 @@ namespace ToDoList.Data
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
             public DbSet<ListItemModel> TodoItems { get; set; } 
+        public DbSet<UserModel> Users { get; set; }
     }
 }

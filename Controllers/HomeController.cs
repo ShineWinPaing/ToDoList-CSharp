@@ -18,8 +18,15 @@ namespace ToDoList.Controllers
 
         public IActionResult Index()
         {
-            var _todoItems = _db.TodoItems.ToList();
-            return View(_todoItems);
+            var userEmail = HttpContext.Session.GetString("UserSession");
+
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var list = _db.TodoItems.Where(item => item.UserEmail == userEmail).ToList();
+            return View(list);
         }
 
         public IActionResult Create()
@@ -42,13 +49,15 @@ namespace ToDoList.Controllers
         [HttpPost]
         public IActionResult Create(ListItemModel newItem)
         {
-            if (ModelState.IsValid)
+            var userEmail = HttpContext.Session.GetString("UserSession");
+            if (userEmail != null)
             {
-                _db.TodoItems.Add(newItem); 
-                _db.SaveChanges(); 
+                newItem.UserEmail = userEmail; 
+                _db.TodoItems.Add(newItem);
+                _db.SaveChanges();
                 return RedirectToAction("Index");
             }
-            return View(newItem);
+            return RedirectToAction("Login", "Account");
         }
 
         [HttpPost]
