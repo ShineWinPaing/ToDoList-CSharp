@@ -1,16 +1,19 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ToDoList.Data;
 using ToDoList.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace ToDoList.Controllers
 {
     public class AccountController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly PasswordHasher<UserModel> _passwordHasher;
 
         public AccountController(ApplicationDbContext db)
         {
             _db = db;
+            _passwordHasher = new PasswordHasher<UserModel>();
         }
 
         public IActionResult Verify(string email)
@@ -48,20 +51,21 @@ namespace ToDoList.Controllers
         {
             if (ModelState.IsValid)
             {
-                if (_db.Users.Any(u => u.Email == newUser.Email))
+                if (_db.Users.Any(u => u.Email ==newUser.Email))
                 {
-                    ViewBag.Error = "This email is already registered.";
+                    ViewBag.Error = "Email already registered.";
                     return View(newUser);
                 }
+                newUser.Password = _passwordHasher.HashPassword(newUser, newUser.Password);
 
-                string otpCode = new Random().Next(100000, 999999).ToString();
-                newUser.OTP = otpCode;
+                newUser.OTP = new Random().Next(100000,999999).ToString();
+
                 newUser.IsVerified = false;
 
                 _db.Users.Add(newUser);
                 _db.SaveChanges();
 
-                return RedirectToAction("Verify", new { email = newUser.Email });
+                return RedirectToAction("Verify", new { email = newUser.Email });   
             }
             return View(newUser);
         }
@@ -74,20 +78,22 @@ namespace ToDoList.Controllers
         [HttpPost]
         public IActionResult Login(string username, string password)
         {
-            var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Password == password);
-
+            var user = _db.Users.FirstOrDefault(u => u.Username == username);
             if (user != null)
             {
-                if (!user.IsVerified)
+                var result = _passwordHasher.VerifyHashedPassword(user, user.Password, password);
+
+                if (result == PasswordVerificationResult.Success)
                 {
-                    ViewBag.Error = "Please verify your email before logging in.";
-                    return RedirectToAction("Verify", new { email = user.Email });
+                    if (!user.IsVerified)
+                    {
+                        return RedirectToAction("Verify", new { email = user.Email });
+                    }
+
+                    HttpContext.Session.SetString("UserSession", user.Email);
+                    return RedirectToAction("Index", "Home");
                 }
-
-                HttpContext.Session.SetString("UserSession", user.Username);
-                return RedirectToAction("Index", "Home");
             }
-
             ViewBag.Error = "Invalid username or password.";
             return View();
         }

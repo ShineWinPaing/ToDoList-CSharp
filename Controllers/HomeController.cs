@@ -52,7 +52,13 @@ namespace ToDoList.Controllers
             var userEmail = HttpContext.Session.GetString("UserSession");
             if (userEmail != null)
             {
-                newItem.UserEmail = userEmail; 
+                newItem.UserEmail = userEmail;
+
+                if (newItem.Description == null)
+                {
+                    newItem.Description = "";
+                }
+
                 _db.TodoItems.Add(newItem);
                 _db.SaveChanges();
                 return RedirectToAction("Index");
@@ -65,10 +71,18 @@ namespace ToDoList.Controllers
         {
             if (ModelState.IsValid)
             {
-                _db.TodoItems.Update(updateItem);
-                _db.SaveChanges();
+                var existingItem = _db.TodoItems.Find(updateItem.Id);
 
-                return RedirectToAction("Index");
+                if (existingItem != null)
+                {
+                    existingItem.Title = updateItem.Title;
+                    existingItem.Description = updateItem.Description;
+                    existingItem.IsCompleted = updateItem.IsCompleted;
+
+                    _db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                return NotFound();
             }
             return View(updateItem);
         }
@@ -76,20 +90,14 @@ namespace ToDoList.Controllers
         [HttpPost]
         public IActionResult Delete(int id)
         {
-            ListItemModel itemToRemove = null;
-            foreach(var item in _db.TodoItems)
+            var item = _db.TodoItems.Find(id);
+            if (item != null)
             {
-                if (item.Id == id)
-                {
-                    itemToRemove = item;
-                    break;
-                }
-            }
-            if (itemToRemove != null)
-            {
-                _db.TodoItems.Remove(itemToRemove);
+                _db.TodoItems.Remove(item);
                 _db.SaveChanges();
             }
+
+
             return RedirectToAction("Index");
         }
 
