@@ -2,6 +2,9 @@
 using ToDoList.Data;
 using ToDoList.Models;
 using Microsoft.AspNetCore.Identity;
+using MailKit.Net.Smtp;
+using MimeKit;
+using MailKit.Security;
 
 namespace ToDoList.Controllers
 {
@@ -58,9 +61,19 @@ namespace ToDoList.Controllers
                 }
                 newUser.Password = _passwordHasher.HashPassword(newUser, newUser.Password);
 
-                newUser.OTP = new Random().Next(100000,999999).ToString();
+                string otpCode = new Random().Next(100000, 999999).ToString();
+                newUser.OTP = otpCode;
 
                 newUser.IsVerified = false;
+
+                try
+                {
+                    SendEmail(newUser.Email, otpCode);
+                }catch (Exception ex)
+                {
+                    ViewBag.Error = "Failed to send OTP email. Please try again.";
+                    return View(newUser);
+                }
 
                 _db.Users.Add(newUser);
                 _db.SaveChanges();
@@ -96,6 +109,29 @@ namespace ToDoList.Controllers
             }
             ViewBag.Error = "Invalid username or password.";
             return View();
+        }
+
+        private void SendEmail(string receiverEmail, string otpCode)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("ToDo App", "your-email@gmail.com"));
+            message.To.Add(new MailboxAddress("",receiverEmail));
+
+            message.Body = new TextPart("html") 
+            { 
+            Text = $"<h1>Welcome to ToDo App</h1><p>Your OTP code is: <strong>{otpCode}</strong></p>"
+            };
+
+            using (var client=new SmtpClient())
+            {
+                client.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+
+                client.Authenticate("shinewinpaing.dev@gmail.com", "vmca xdrv ewvk sqxh");
+
+                client.Send(message);
+                client.Disconnect(true);
+            }
+
         }
 
         public IActionResult Logout()
