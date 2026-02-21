@@ -149,13 +149,26 @@ namespace ToDoList.Controllers
             }
 
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("ToDo App", senderEmail));
+            message.From.Add(new MailboxAddress("ToDo List support", senderEmail));
             message.To.Add(new MailboxAddress("",receiverEmail));
 
-            message.Body = new TextPart("html") 
-            { 
-            Text = $"<h1>Welcome to ToDo App</h1><p>Your OTP code is: <strong>{otpCode}</strong></p>"
-            };
+            message.Subject = $"ToDo App Verification Code";
+
+            var bodyBuilder = new BodyBuilder;
+
+            bodyBuilder.TextBody = $"Welcome to ToDo App! Your Verification Code : {otpCode}";
+
+            bodyBuilder.HtmlBody = $@"
+            <div style='font-family: sans-serif; padding: 20px; border: 1px solid #eee;'>
+            <h2 style='color: #2c3e50;'>Verify Your Account</h2>
+            <p>Thank you for joining ToDo App. Please use the code below to complete your registration:</p>
+            <div style='font-size: 24px; font-weight: bold; color: #e74c3c; padding: 10px; background: #f9f9f9; display: inline-block;'>
+                {otpCode}
+            </div>
+            <p style='font-size: 12px; color: #7f8c8d; margin-top: 20px;'>If you did not request this, please ignore this email.</p>
+            </div>";
+
+            message.Body = bodyBuilder.ToMessageBody();
 
             using (var client=new SmtpClient())
             {
