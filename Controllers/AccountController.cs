@@ -12,10 +12,12 @@ namespace ToDoList.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly PasswordHasher<UserModel> _passwordHasher;
+        private readonly IConfiguration _configuration;
 
-        public AccountController(ApplicationDbContext db)
+        public AccountController(ApplicationDbContext db,IConfiguration configuration)
         {
             _db = db;
+            _configuration = configuration;
             _passwordHasher = new PasswordHasher<UserModel>();
         }
 
@@ -71,7 +73,7 @@ namespace ToDoList.Controllers
                     SendEmail(newUser.Email, otpCode);
                 }catch (Exception ex)
                 {
-                    ViewBag.Error = "Failed to send OTP email. Please try again.";
+                    ViewBag.Error = $"Email Error: {ex.Message}";
                     return View(newUser);
                 }
 
@@ -85,11 +87,24 @@ namespace ToDoList.Controllers
 
         public IActionResult Login()
         {
+            var userSession = HttpContext.Session.GetString("UserSession");
+            var rememberMeCookie = Request.Cookies["RememberMeCookie"];
+
+            if (!string.IsNullOrEmpty(userSession)||!string.IsNullOrEmpty(rememberMeCookie))
+            {
+                if (string.IsNullOrEmpty(userSession))
+                {
+                    HttpContext.Session.SetString("UserSession", rememberMeCookie);
+                }
+                return RedirectToAction("Index", "Home");
+            }
+
+
             return View();
         }
 
         [HttpPost]
-        public IActionResult Login(string username, string password)
+        public IActionResult Login(string username, string password, bool rememberMe)
         {
             var user = _db.Users.FirstOrDefault(u => u.Username == username);
             if (user != null)
@@ -104,6 +119,18 @@ namespace ToDoList.Controllers
                     }
 
                     HttpContext.Session.SetString("UserSession", user.Email);
+
+                    if(rememberMe)
+                    {
+                        var options = new CookieOptions
+                        {
+                            Expires = DateTime.Now.AddDays(30),
+                            HttpOnly = true,
+                            IsEssential = true,
+                            Path = "/"
+                        };
+                        Response.Cookies.Append("RememberMeCookie", user.Email, options);                    }
+
                     return RedirectToAction("Index", "Home");
                 }
             }
@@ -113,8 +140,16 @@ namespace ToDoList.Controllers
 
         private void SendEmail(string receiverEmail, string otpCode)
         {
+            var senderEmail = _configuration["EmailSettings:Email"];
+            var appPassword = _configuration["EmailSettings:Password"];
+
+            if (string.IsNullOrEmpty(senderEmail) || string.IsNullOrEmpty(appPassword))
+            {
+                throw new Exception("Email configuration is missing from appsettings.json!");
+            }
+
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("ToDo App", "your-email@gmail.com"));
+            message.From.Add(new MailboxAddress("ToDo App", senderEmail));
             message.To.Add(new MailboxAddress("",receiverEmail));
 
             message.Body = new TextPart("html") 
@@ -126,7 +161,7 @@ namespace ToDoList.Controllers
             {
                 client.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
 
-                client.Authenticate("shinewinpaing.dev@gmail.com", "vmca xdrv ewvk sqxh");
+                client.Authenticate(senderEmail,appPassword );
 
                 client.Send(message);
                 client.Disconnect(true);
@@ -137,6 +172,7 @@ namespace ToDoList.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
+            Response.Cookies.Delete("RememberMeCookie");
             return RedirectToAction("Login");
         }
     }

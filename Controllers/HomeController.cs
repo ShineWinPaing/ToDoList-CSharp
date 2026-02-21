@@ -18,8 +18,15 @@ namespace ToDoList.Controllers
 
         public IActionResult Index()
         {
+            var rememeberEmail = Request.Cookies["RememberMeCookie"];
             var userEmail = HttpContext.Session.GetString("UserSession");
 
+            if (string.IsNullOrEmpty(userEmail) && !string.IsNullOrEmpty(rememeberEmail))
+            {
+                HttpContext.Session.SetString("UserSession", rememeberEmail);
+                userEmail = rememeberEmail;
+            }
+            
             if (string.IsNullOrEmpty(userEmail))
             {
                 return RedirectToAction("Login", "Account");

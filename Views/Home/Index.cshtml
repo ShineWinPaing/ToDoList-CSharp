@@ -37,5 +37,14 @@
         
         }
     </tbody>
-    <a class="btn btn-primary mt-3" asp-asp-controller="Home" asp-action="Create">Add New Task</a>
+    <div class="d-flex justify-content-center align-items-center position-relative my-4">
+        <div style="position: absolute; left: 0;">
+            <a asp-action="Create" class="btn btn-primary">Add New Task</a>
+
+        </div>
+
+        <div style="position: absolute; right: 0;">
+            <a asp-controller="Account" asp-action="Logout" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
 </table>
