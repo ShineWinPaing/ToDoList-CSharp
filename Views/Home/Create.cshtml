@@ -1,29 +1,37 @@
 ﻿@model ToDoList.Models.ListItemModel
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
 @{
     ViewData["Title"] = "Create New Task";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="container mt-4">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
 
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create" method="post">
-            <div class="form-group mb-3">
-                <label asp-for="Title" class="form-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Create" method="post" class="card shadow-sm p-4">
+                <div class="form-group mb-3">
+                    <label asp-for="Title" class="form-label font-weight-bold"></label>
+                    <input asp-for="Title" class="form-control" placeholder="What needs to be done?" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Description" class="form-label"></label>
-                <textarea asp-for="Description" class="form-control"></textarea>
-            </div>
+                <div class="form-group mb-3">
+                    <label asp-for="DueDate" class="form-label font-weight-bold">Target Date</label>
+                    <input asp-for="DueDate" class="form-control" type="date" />
+                    <span asp-validation-for="DueDate" class="text-danger"></span>
+                </div>
 
-            <button type="submit" class="btn btn-success">Save</button>
-            <a asp-action="Index" class="btn btn-secondary">Back to ToDoList</a>
-        </form>
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="form-label font-weight-bold"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="Optional details..."></textarea>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success px-4">Save Task</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

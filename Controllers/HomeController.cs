@@ -18,27 +18,77 @@ namespace ToDoList.Controllers
 
         public IActionResult Index()
         {
-            var rememeberEmail = Request.Cookies["RememberMeCookie"];
-            var userEmail = HttpContext.Session.GetString("UserSession");
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var rememberMeCookie = Request.Cookies["RememberMeCookie"];
 
-            if (string.IsNullOrEmpty(userEmail) && !string.IsNullOrEmpty(rememeberEmail))
+            if (userId == null && !string.IsNullOrEmpty(rememberMeCookie))
             {
-                HttpContext.Session.SetString("UserSession", rememeberEmail);
-                userEmail = rememeberEmail;
+                if (int.TryParse(rememberMeCookie,out int id))
+                {
+                    HttpContext.Session.SetInt32("UserId",id);
+                    userId = id;
+                }
+                if (userId==null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
             }
-            
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            var list = _db.TodoItems.Where(item => item.UserEmail == userEmail).ToList();
+            var list = _db.TodoItems.Where(item => item.UserId == userId).ToList();
             return View(list);
         }
 
-        public IActionResult Create()
+        [HttpGet]
+        public JsonResult GetCalendarTasks()
         {
-            return View();
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+            {
+                return Json(new { Error = "User not logged in" });
+            }
+
+            var tasks = _db.TodoItems
+                .Where(item => item.UserId == userId)
+                .Select(item => new
+                {
+                    id = item.Id,
+                    title = item.Title,
+                    start = item.DueDate.ToString("yyyy-MM-dd"),
+                    color = item.IsCompleted ? "#28a745" : "#dc3545" 
+                }).ToList();
+
+            return Json(tasks);
+        }
+
+        public IActionResult Create(string? date)
+        {
+            var model = new ListItemModel();
+            if (!string.IsNullOrEmpty(date))
+            {
+                model.DueDate = DateTime.Parse(date);
+            }
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult Create(ListItemModel newItem)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId != null)
+            {
+                newItem.UserId = userId.Value;
+
+                if (newItem.Description==null)
+                {
+                    newItem.Description = "";
+                }
+
+                _db.TodoItems.Add(newItem);
+                _db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            return RedirectToAction("Login", "Account");
         }
 
         public IActionResult Edit(int id)
@@ -51,26 +101,6 @@ namespace ToDoList.Controllers
             }
 
             return View(item);
-        }
-
-        [HttpPost]
-        public IActionResult Create(ListItemModel newItem)
-        {
-            var userEmail = HttpContext.Session.GetString("UserSession");
-            if (userEmail != null)
-            {
-                newItem.UserEmail = userEmail;
-
-                if (newItem.Description == null)
-                {
-                    newItem.Description = "";
-                }
-
-                _db.TodoItems.Add(newItem);
-                _db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-            return RedirectToAction("Login", "Account");
         }
 
         [HttpPost]

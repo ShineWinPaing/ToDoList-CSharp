@@ -87,14 +87,17 @@ namespace ToDoList.Controllers
 
         public IActionResult Login()
         {
-            var userSession = HttpContext.Session.GetString("UserSession");
+            var userIdSession = HttpContext.Session.GetInt32("UserId");
             var rememberMeCookie = Request.Cookies["RememberMeCookie"];
 
-            if (!string.IsNullOrEmpty(userSession)||!string.IsNullOrEmpty(rememberMeCookie))
+            if (userIdSession != null ||!string.IsNullOrEmpty(rememberMeCookie))
             {
-                if (string.IsNullOrEmpty(userSession))
+                if (userIdSession == null && int.TryParse(rememberMeCookie, out int id))
                 {
-                    HttpContext.Session.SetString("UserSession", rememberMeCookie);
+                    HttpContext.Session.SetInt32("UserId",id);
+
+                    var user = _db.Users.Find(id);
+                    if (user != null) HttpContext.Session.SetString("UserSession",user.Email);
                 }
                 return RedirectToAction("Index", "Home");
             }
@@ -119,6 +122,7 @@ namespace ToDoList.Controllers
                     }
 
                     HttpContext.Session.SetString("UserSession", user.Email);
+                    HttpContext.Session.SetInt32("UserId", user.Id);
 
                     if(rememberMe)
                     {
@@ -129,7 +133,7 @@ namespace ToDoList.Controllers
                             IsEssential = true,
                             Path = "/"
                         };
-                        Response.Cookies.Append("RememberMeCookie", user.Email, options);                    }
+                        Response.Cookies.Append("RememberMeCookie", user.Id.ToString(), options);                    }
 
                     return RedirectToAction("Index", "Home");
                 }
@@ -154,7 +158,7 @@ namespace ToDoList.Controllers
 
             message.Subject = $"ToDo App Verification Code";
 
-            var bodyBuilder = new BodyBuilder;
+            var bodyBuilder = new BodyBuilder();
 
             bodyBuilder.TextBody = $"Welcome to ToDo App! Your Verification Code : {otpCode}";
 
