@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using MailKit.Net.Smtp;
 using MimeKit;
 using MailKit.Security;
+using Microsoft.AspNetCore.SignalR;
 
 namespace ToDoList.Controllers
 {
@@ -184,6 +185,35 @@ namespace ToDoList.Controllers
                 client.Disconnect(true);
             }
 
+        }
+
+        public IActionResult Profile()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login");
+
+            var user = _db.Users.Find(userId);
+            return View(user);
+
+        }
+
+        [HttpPost]
+        public IActionResult Profile(UserModel updatedUser)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login");
+
+            var userInDb = _db.Users.Find(userId);
+            if (userInDb != null)
+            {
+                userInDb.FirstName = updatedUser.FirstName;
+                userInDb.LastName = updatedUser.LastName;
+                userInDb.Username = updatedUser.Username;
+                userInDb.Bio = updatedUser.Bio;
+
+                _db.SaveChanges();
+            }
+            return RedirectToAction("Profile");
         }
 
         public IActionResult Logout()

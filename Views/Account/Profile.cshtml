@@ -1,0 +1,72 @@
+﻿@model ToDoList.Models.UserModel
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="bg-primary py-5 text-center">
+                    <div class="rounded-circle border border-4 border-white shadow bg-white text-primary d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px; font-size: 3rem; font-weight: bold;">
+                        @(!string.IsNullOrEmpty(Model.FirstName) ? Model.FirstName.Substring(0, 1).ToUpper() : Model.Username.Substring(0, 1).ToUpper())
+                    </div>
+                </div>
+
+                <div class="card-body text-center mt-3">
+                    <h2 class="fw-bold mb-0">@(string.IsNullOrEmpty(Model.FullName) ? Model.Username : Model.FullName)</h2>
+                    <p class="text-muted">@@@Model.Username</p>
+
+                    <div class="row mt-4 px-4 text-start">
+                        <div class="col-md-6 mb-3">
+                            <label class="small text-muted text-uppercase fw-bold">Email Address</label>
+                            <p class="border-bottom pb-2">@Model.Email</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="small text-muted text-uppercase fw-bold">Member Since</label>
+                            <p class="border-bottom pb-2">2026</p>
+                        </div>
+                        <div class="col-12">
+                            <label class="small text-muted text-uppercase fw-bold">About Me</label>
+                            <p class="text-secondary">@(Model.Bio ?? "No bio provided yet.")</p>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary rounded-pill px-4 my-4" data-bs-toggle="modal" data-bs-target="#editModal">
+                        Edit My Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow" style="border-radius: 15px;">
+            <form asp-action="Profile" method="post">
+                <div class="modal-body p-4">
+                    <h4 class="fw-bold mb-4">Edit Profile</h4>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">First Name</label>
+                            <input asp-for="FirstName" class="form-control" placeholder="John" />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input asp-for="LastName" class="form-control" placeholder="Doe" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input asp-for="Username" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Bio</label>
+                        <textarea asp-for="Bio" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="submit" class="btn btn-primary w-100 py-2" style="border-radius: 10px;">Save Updates</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
